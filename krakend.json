@@ -22,6 +22,14 @@
         "/__health",
         "/__stats"
       ]
+    },
+    "plugin/http-server": {
+      "name": ["wildcard", "random"],
+      "wildcard": {
+        "endpoints": {
+          "/__wildcard/foo": ["/foo"]
+        }
+      }
     }
   },
   "plugin": {
@@ -34,16 +42,34 @@
   "name": "plugin-test-microgateway",
   "port": 8080,
   "endpoints": [
+    {
+      "endpoint": "/abc",
+      "method": "GET",
+      "output_encoding": "json",
+      "backend": [
+          {
+            "method": "GET",
+            "host": ["https://jsonplaceholder.typicode.com"],
+            "url_pattern": "/users/1"
+          }
+      ]
+      },
       {
-        "endpoint": "/example/{id}",
+        "endpoint": "/__wildcard/foo",
+        "input_headers": [ "X-KidsLoop-Wildcard" ],
         "method": "GET",
         "output_encoding": "json",
         "backend": [
-            {
-                "method": "GET",
-                "host": ["https://jsonplaceholder.typicode.com"],
-                "url_pattern": "/users/{id}"
+          {
+            "method": "GET",
+            "host": ["https://jsonplaceholder.typicode.com"],
+            "url_pattern": "",
+            "extra_config": {
+              "plugin/http-client": {
+                  "name": "wildcard"
+              }
             }
+          }
         ]
     }
   ]
