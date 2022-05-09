@@ -69,8 +69,8 @@ func forwardWildcardRequestToKrakendClient(w http.ResponseWriter, req *http.Requ
 		http.Error(w, "404 page not found", http.StatusNotFound)
 		return
 	}
-	targetUrl, ok := targetEndpoints[pathToCheck]
 
+	targetUrl, ok := targetEndpoints[pathToCheck]
 	if !ok {
 		handler.ServeHTTP(w, req)
 		return

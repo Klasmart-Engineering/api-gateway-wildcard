@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/luraproject/lura/v2/logging"
@@ -29,14 +30,95 @@ func (m *Mock) Write([]byte) (int, error) {
 func (m *Mock) WriteHeader(statusCode int) {}
 
 func TestServerPluginRequestModification(t *testing.T) {
-	HandlerRegisterer.RegisterLogger(logging.NoOp)
-	req := httptest.NewRequest("GET", "/foo/who", nil)
-	mock := new(Mock)
-	endpoints := map[string]string{"foo": "/__wildcard/bar"}
-	mock.On("ServeHTTP", mock, req)
 
-	forwardWildcardRequestToKrakendClient(mock, req, mock, endpoints)
-	assert.Equal(t, "/who", req.Header.Get(headerName))
-	assert.Equal(t, "/__wildcard/bar", req.URL.Path)
-	mock.AssertCalled(t, "ServeHTTP", mock, req)
+	var Tests = []struct {
+		testName            string
+		method              string
+		inputUrl            string
+		endpoints           map[string]string
+		shouldHaveRerouted  bool
+		shouldCallHttpServe bool
+		targetUrl           string
+	}{
+		{
+			testName:            "valid get scenario",
+			method:              "GET",
+			inputUrl:            "/foo/who",
+			endpoints:           map[string]string{"foo": "/__wildcard/bar"},
+			shouldHaveRerouted:  true,
+			shouldCallHttpServe: true,
+			targetUrl:           "/who",
+		},
+		{
+			testName:            "valid post scenario",
+			method:              "POST",
+			inputUrl:            "/foo/who",
+			endpoints:           map[string]string{"foo": "/__wildcard/bar"},
+			shouldHaveRerouted:  true,
+			shouldCallHttpServe: true,
+			targetUrl:           "/who",
+		},
+		{
+			testName:            "valid scenario with multiple endpoints",
+			method:              "GET",
+			inputUrl:            "/bar/hello",
+			endpoints:           map[string]string{"foo": "/__wildcard/bar", "bar": "/__wildcard/foo"},
+			shouldHaveRerouted:  true,
+			shouldCallHttpServe: true,
+			targetUrl:           "/hello",
+		},
+		{
+			testName:            "no matches",
+			method:              "GET",
+			inputUrl:            "/bar/who",
+			endpoints:           map[string]string{},
+			shouldHaveRerouted:  false,
+			shouldCallHttpServe: true,
+			targetUrl:           "",
+		},
+		{
+			testName:            "root url",
+			method:              "GET",
+			inputUrl:            "/",
+			endpoints:           map[string]string{"foo": "/__wildcard/bar"},
+			shouldHaveRerouted:  false,
+			shouldCallHttpServe: true,
+			targetUrl:           "",
+		},
+		{
+			testName:            "directly trying to hit the wildcard url",
+			method:              "GET",
+			inputUrl:            "/__wildcard/foo",
+			endpoints:           map[string]string{"foo": "/__wildcard/foo"},
+			shouldHaveRerouted:  false,
+			shouldCallHttpServe: false,
+			targetUrl:           "",
+		},
+	}
+
+	HandlerRegisterer.RegisterLogger(logging.NoOp)
+	for _, tt := range Tests {
+		req := httptest.NewRequest(tt.method, tt.inputUrl, nil)
+		mock := new(Mock)
+		mock.On("ServeHTTP", mock, req)
+
+		prefixPath := strings.Split(tt.inputUrl, "/")[1]
+		targetInternalUrl := tt.endpoints[prefixPath]
+
+		forwardWildcardRequestToKrakendClient(mock, req, mock, tt.endpoints)
+
+		if tt.shouldHaveRerouted {
+			assert.Equal(t, tt.targetUrl, req.Header.Get(headerName))
+			assert.Equal(t, targetInternalUrl, req.URL.Path)
+		} else {
+			assert.Equal(t, tt.inputUrl, req.URL.Path)
+		}
+
+		if tt.shouldCallHttpServe {
+			mock.AssertCalled(t, "ServeHTTP", mock, req)
+		} else {
+			mock.AssertNotCalled(t, "ServeHTTP")
+			mock.AssertNotCalled(t, "ServeHTTP", mock, req)
+		}
+	}
 }

@@ -53,24 +53,24 @@
             "url_pattern": "/users/1"
           }
       ]
-      },
-      {
-        "endpoint": "/__wildcard/foo",
-        "input_headers": [ "X-KidsLoop-Wildcard" ],
-        "method": "GET",
-        "output_encoding": "json",
-        "backend": [
-          {
-            "method": "GET",
-            "host": ["https://jsonplaceholder.typicode.com"],
-            "url_pattern": "",
-            "extra_config": {
-              "plugin/http-client": {
-                  "name": "wildcard"
-              }
+    },
+    {
+      "endpoint": "/__wildcard/foo",
+      "input_headers": [ "X-KidsLoop-Wildcard" ],
+      "method": "GET",
+      "output_encoding": "json",
+      "backend": [
+        {
+          "method": "GET",
+          "host": ["https://jsonplaceholder.typicode.com"],
+          "url_pattern": "",
+          "extra_config": {
+            "plugin/http-client": {
+                "name": "wildcard"
             }
           }
-        ]
+        }
+      ]
     }
   ]
 }
