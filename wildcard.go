@@ -114,7 +114,7 @@ func (r registerer) registerClients(ctx context.Context, config map[string]inter
 func resolveWildcardRequest(w http.ResponseWriter, req *http.Request, ctx context.Context) {
 	targetPath := req.Header.Get(headerName)
 	req.URL.Path = targetPath
-	logger.Debug("routing traffic to target url:", req.URL)
+	logger.Debug(logPrefix, "routing traffic to target url:", req.URL)
 	client := client.NewHTTPClient(ctx)
 	resp, err := client.Do(req)
 

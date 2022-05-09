@@ -16,3 +16,6 @@ r:
 	docker run -p "8080:8080" gateway
 
 br: b r
+
+test:
+	docker-compose up --abort-on-container-exit --exit-code-from test --build --force-recreate

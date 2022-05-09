@@ -1,5 +1,6 @@
 {
   "$schema": "https://www.krakend.io/schema/v3.json",
+  "@comment": "Test configuration when working on the wildcard plugin",
   "version": 3,
   "extra_config": {
     "telemetry/logging": {
@@ -43,18 +44,6 @@
   "port": 8080,
   "endpoints": [
     {
-      "endpoint": "/abc",
-      "method": "GET",
-      "output_encoding": "json",
-      "backend": [
-          {
-            "method": "GET",
-            "host": ["https://jsonplaceholder.typicode.com"],
-            "url_pattern": "/users/1"
-          }
-      ]
-    },
-    {
       "endpoint": "/__wildcard/foo",
       "input_headers": [ "X-KidsLoop-Wildcard" ],
       "method": "GET",
@@ -62,6 +51,25 @@
       "backend": [
         {
           "method": "GET",
+          "host": ["https://jsonplaceholder.typicode.com"],
+          "url_pattern": "",
+          "extra_config": {
+            "plugin/http-client": {
+                "name": "wildcard"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "endpoint": "/__wildcard/foo",
+      "input_headers": [ "X-KidsLoop-Wildcard", "Content-Length", "Content-Type" ],
+      "method": "POST",
+      "output_encoding": "json",
+      "backend": [
+        {
+          "method": "POST",
+          "encoding": "json",
           "host": ["https://jsonplaceholder.typicode.com"],
           "url_pattern": "",
           "extra_config": {
