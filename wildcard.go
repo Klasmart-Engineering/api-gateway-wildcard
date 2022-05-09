@@ -8,8 +8,8 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/luraproject/lura/transport/http/client"
 	"github.com/luraproject/lura/v2/logging"
-	"github.com/luraproject/lura/v2/transport/http/client"
 )
 
 const pluginName = "wildcard"
@@ -54,37 +54,41 @@ func (r registerer) registerHandlers(ctx context.Context, config map[string]inte
 
 	// return the actual handler wrapping or your custom logic so it can be used as a replacement for the default http handler
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		splitPath := strings.Split(req.URL.Path, "/")
-		if len(splitPath) == 0 {
-			handler.ServeHTTP(w, req)
-			return
-		}
-		pathToCheck := splitPath[1]
-		if pathToCheck == "__wildcard" {
-			http.Error(w, "404 page not found", http.StatusNotFound)
-			return
-		}
-		targetUrl, ok := targetEndpoints[pathToCheck]
-
-		if !ok {
-			handler.ServeHTTP(w, req)
-			return
-		}
-		var targetPath string
-		if len(splitPath) < 2 {
-			targetPath = "/"
-		} else {
-			var builder strings.Builder
-			builder.WriteString("/")
-			builder.WriteString(strings.Join(splitPath[2:], "/"))
-			targetPath = builder.String()
-		}
-
-		req.Header.Set(headerName, targetPath)
-		req.URL.Path = targetUrl
-		logger.Debug(logPrefix, "routing traffic to", req.URL.Path)
-		handler.ServeHTTP(w, req)
+		forwardWildcardRequestToKrakendClient(w, req, handler, targetEndpoints)
 	}), nil
+}
+
+func forwardWildcardRequestToKrakendClient(w http.ResponseWriter, req *http.Request, handler http.Handler, targetEndpoints map[string]string) {
+	splitPath := strings.Split(req.URL.Path, "/")
+	if len(splitPath) == 0 {
+		handler.ServeHTTP(w, req)
+		return
+	}
+	pathToCheck := splitPath[1]
+	if pathToCheck == "__wildcard" {
+		http.Error(w, "404 page not found", http.StatusNotFound)
+		return
+	}
+	targetUrl, ok := targetEndpoints[pathToCheck]
+
+	if !ok {
+		handler.ServeHTTP(w, req)
+		return
+	}
+	var targetPath string
+	if len(splitPath) < 2 {
+		targetPath = "/"
+	} else {
+		var builder strings.Builder
+		builder.WriteString("/")
+		builder.WriteString(strings.Join(splitPath[2:], "/"))
+		targetPath = builder.String()
+	}
+
+	req.Header.Set(headerName, targetPath)
+	req.URL.Path = targetUrl
+	logger.Debug(logPrefix, "routing traffic to", req.URL.Path)
+	handler.ServeHTTP(w, req)
 }
 
 var ClientRegisterer = registerer(pluginName)
@@ -97,33 +101,35 @@ func (r registerer) RegisterClients(f func(
 }
 
 func (r registerer) registerClients(ctx context.Context, config map[string]interface{}) (http.Handler, error) {
-	logger.Info(config)
-
 	if !configContainsPlugin(config) {
 		return nil, fmt.Errorf("%s plugin was not named in configuration", pluginName)
 	}
 
 	// return the actual handler wrapping or your custom logic so it can be used as a replacement for the default http client
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		targetPath := req.Header.Get(headerName)
-		req.URL.Path = targetPath
-		logger.Debug("routing traffic to target url:", req.URL)
-		client := client.NewHTTPClient(ctx)
-		resp, err := client.Do(req)
-
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		defer resp.Body.Close()
-
-		bytes, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusNotAcceptable)
-			return
-		}
-		w.Write(bytes)
+		resolveWildcardRequest(w, req, ctx)
 	}), nil
+}
+
+func resolveWildcardRequest(w http.ResponseWriter, req *http.Request, ctx context.Context) {
+	targetPath := req.Header.Get(headerName)
+	req.URL.Path = targetPath
+	logger.Debug("routing traffic to target url:", req.URL)
+	client := client.NewHTTPClient(ctx)
+	resp, err := client.Do(req)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close()
+
+	bytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotAcceptable)
+		return
+	}
+	w.Write(bytes)
 }
 
 func parseEndpoints(endpoints map[string]interface{}) map[string]string {
