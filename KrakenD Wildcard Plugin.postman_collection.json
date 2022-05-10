@@ -1,0 +1,141 @@
+{
+	"info": {
+		"_postman_id": "2c3d8a9f-3348-4612-a754-aa63569f4914",
+		"name": "KrakenD Wildcard Plugin",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "GET - Wildcard",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Test basic response\", function () {",
+							"    pm.response.to.have.status(200);",
+							"    ",
+							"    const json = pm.response.json();",
+							"    pm.expect(json).to.eql({",
+							"        \"address\": {",
+							"            \"city\": \"Gwenborough\",",
+							"            \"geo\": {",
+							"                \"lat\": \"-37.3159\",",
+							"                \"lng\": \"81.1496\"",
+							"            },",
+							"            \"street\": \"Kulas Light\",",
+							"            \"suite\": \"Apt. 556\",",
+							"            \"zipcode\": \"92998-3874\"",
+							"        },",
+							"        \"company\": {",
+							"            \"bs\": \"harness real-time e-markets\",",
+							"            \"catchPhrase\": \"Multi-layered client-server neural-net\",",
+							"            \"name\": \"Romaguera-Crona\"",
+							"        },",
+							"        \"email\": \"Sincere@april.biz\",",
+							"        \"id\": 1,",
+							"        \"name\": \"Leanne Graham\",",
+							"        \"phone\": \"1-770-736-8031 x56442\",",
+							"        \"username\": \"Bret\",",
+							"        \"website\": \"hildegard.org\"",
+							"    })",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{BASE_URL}}/foo/users/1",
+					"host": [
+						"{{BASE_URL}}"
+					],
+					"path": [
+						"foo",
+						"users",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "POST - Wildcard",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Test basic response\", function () {",
+							"    pm.response.to.have.status(200);",
+							"    ",
+							"    const json = pm.response.json();",
+							"    pm.expect(json).to.eql({",
+							"        \"body\": \"I am a custom post\",",
+							"        \"id\": 101,",
+							"        \"title\": \"Hello World\",",
+							"        \"userId\": 1",
+							"    })",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"title\": \"Hello World\",\n    \"body\": \"I am a custom post\",\n    \"userId\": 1\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{BASE_URL}}/foo/posts",
+					"host": [
+						"{{BASE_URL}}"
+					],
+					"path": [
+						"foo",
+						"posts"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "BASE_URL",
+			"value": "localhost:8080",
+			"type": "string"
+		}
+	]
+}
