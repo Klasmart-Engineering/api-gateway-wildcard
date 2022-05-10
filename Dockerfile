@@ -1,4 +1,4 @@
-FROM ghcr.io/kl-engineering/kl-krakend-builder:0.0.1 AS builder
+FROM ghcr.io/kl-engineering/kl-krakend-builder:0.0.2 AS builder
 
 WORKDIR /tmp/builder
 COPY * plugins/tmp
@@ -6,7 +6,7 @@ COPY * plugins/tmp
 WORKDIR /tmp/builder/plugins/tmp
 RUN make all
 
-FROM ghcr.io/kl-engineering/kl-krakend:0.0.1 as krakend
+FROM ghcr.io/kl-engineering/kl-krakend:0.0.2 as krakend
 
 USER root
 
