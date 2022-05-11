@@ -8,7 +8,7 @@
       "prefix": "[KRAKEND]",
       "syslog": false,
       "stdout": true,
-      "format": "default"
+      "format": "logstash"
     },
     "github_com/devopsfaith/krakend-metrics": {
       "collection_time": "60s",
